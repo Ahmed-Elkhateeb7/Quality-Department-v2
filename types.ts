@@ -19,6 +19,8 @@ export interface ReservedItem {
   actionTaken: string;
   date: string;
   status: 'pending' | 'resolved' | 'scrapped';
+  shift: 'A' | 'B' | 'C'; // Added Shift
+  inspectorName: string; // Added Inspector Name
 }
 
 export interface LabDevice {
@@ -26,6 +28,8 @@ export interface LabDevice {
   name: string;
   image: string;
   sop: string; // Standard Operating Procedure text
+  lastCalibrationDate?: string; // New: Last Calibration Date
+  nextCalibrationDate?: string; // New: Next Calibration Date
 }
 
 export interface Employee {

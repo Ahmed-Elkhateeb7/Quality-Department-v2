@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { LabDevice, UserRole } from '../types';
-import { Microscope, Plus, Search, Edit2, Trash2, X, Upload, Eye, FileText, FlaskConical } from 'lucide-react';
+import { Microscope, Plus, Search, Edit2, Trash2, X, Upload, Eye, FileText, FlaskConical, Calendar, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LabEquipmentProps {
@@ -20,7 +20,9 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
   const [formData, setFormData] = useState<Partial<LabDevice>>({
     name: '',
     image: '',
-    sop: ''
+    sop: '',
+    lastCalibrationDate: '',
+    nextCalibrationDate: ''
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +44,7 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
   };
 
   const resetForm = () => {
-    setFormData({ name: '', image: '', sop: '' });
+    setFormData({ name: '', image: '', sop: '', lastCalibrationDate: '', nextCalibrationDate: '' });
     setEditingDevice(null);
   };
 
@@ -81,6 +83,15 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
     }
     setIsModalOpen(false);
     resetForm();
+  };
+
+  const isCalibrationDue = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const today = new Date();
+    const nextDate = new Date(dateStr);
+    const diffTime = nextDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    return diffDays <= 7; // Warning if due within 7 days or overdue
   };
 
   return (
@@ -141,6 +152,15 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
               
               <div className="p-6 flex flex-col flex-1">
                 <h3 className="text-xl font-black text-gray-800 mb-2">{device.name}</h3>
+                
+                {/* Calibration Status Badge */}
+                {device.nextCalibrationDate && (
+                    <div className={`flex items-center gap-2 mb-3 p-2 rounded-lg text-xs font-bold ${isCalibrationDue(device.nextCalibrationDate) ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                        {isCalibrationDue(device.nextCalibrationDate) ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                        <span>معايرة قادمة: {device.nextCalibrationDate}</span>
+                    </div>
+                )}
+
                 <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4 flex-1">
                     <p className="text-xs text-gray-500 font-bold mb-1">مقتطف من الإجراء:</p>
                     <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">{device.sop}</p>
@@ -205,7 +225,7 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
                   </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+              <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6 custom-scrollbar">
                    <div className="flex justify-center">
                         <div 
                           onClick={() => fileInputRef.current?.click()}
@@ -240,6 +260,34 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
                        />
                    </div>
 
+                   {/* New Calibration Date Fields */}
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-black text-gray-700 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                تاريخ آخر معايرة
+                            </label>
+                            <input 
+                                type="date"
+                                value={formData.lastCalibrationDate}
+                                onChange={(e) => setFormData({...formData, lastCalibrationDate: e.target.value})}
+                                className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-royal-500 outline-none font-medium text-gray-600"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-black text-gray-700 flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                تاريخ المعايرة القادمة
+                            </label>
+                            <input 
+                                type="date"
+                                value={formData.nextCalibrationDate}
+                                onChange={(e) => setFormData({...formData, nextCalibrationDate: e.target.value})}
+                                className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-royal-500 outline-none font-medium text-gray-600"
+                            />
+                        </div>
+                   </div>
+
                    <div className="space-y-2">
                        <label className="text-sm font-black text-gray-700">إجراء التشغيل القياسي (SOP)</label>
                        <textarea 
@@ -271,11 +319,21 @@ export const LabEquipment: React.FC<LabEquipmentProps> = ({ devices, setDevices,
                   <div className="relative h-64 shrink-0">
                       <img src={viewingDevice.image} alt={viewingDevice.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-8">
-                          <div className="text-white">
-                              <h2 className="text-3xl font-black mb-2">{viewingDevice.name}</h2>
-                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-sm font-bold border border-white/20">
-                                  <FileText className="w-4 h-4" />
-                                  Standard Operating Procedure (SOP)
+                          <div className="text-white w-full">
+                              <div className="flex justify-between items-end">
+                                <div>
+                                    <h2 className="text-3xl font-black mb-2">{viewingDevice.name}</h2>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-sm font-bold border border-white/20">
+                                        <FileText className="w-4 h-4" />
+                                        Standard Operating Procedure (SOP)
+                                    </div>
+                                </div>
+                                {(viewingDevice.lastCalibrationDate || viewingDevice.nextCalibrationDate) && (
+                                    <div className="bg-black/50 backdrop-blur-md p-3 rounded-xl border border-white/10 text-right">
+                                        {viewingDevice.lastCalibrationDate && <p className="text-xs text-gray-300">آخر معايرة: <span className="text-white font-bold">{viewingDevice.lastCalibrationDate}</span></p>}
+                                        {viewingDevice.nextCalibrationDate && <p className="text-xs text-gray-300 mt-1">المعايرة القادمة: <span className={`font-bold ${isCalibrationDue(viewingDevice.nextCalibrationDate) ? 'text-amber-400' : 'text-emerald-400'}`}>{viewingDevice.nextCalibrationDate}</span></p>}
+                                    </div>
+                                )}
                               </div>
                           </div>
                       </div>

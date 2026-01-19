@@ -8,7 +8,7 @@ import { Product, KPIData, PageView, ReservedItem, UserRole } from '../types';
 import { 
   Package, TrendingUp, Download, Eye, ShieldCheck, Clock, ArrowRight, 
   BarChart3, PlusCircle, Zap, Activity, Calendar as CalendarIcon, FileText,
-  AlertTriangle, ClipboardList, Lock, Edit2, Trash2, X, Save
+  AlertTriangle, ClipboardList, Lock, Edit2, Trash2, X, Save, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -38,7 +38,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     defects: '',
     actionTaken: '',
     date: new Date().toISOString().split('T')[0],
-    status: 'pending'
+    status: 'pending',
+    shift: 'A',
+    inspectorName: ''
   });
 
   useEffect(() => {
@@ -88,7 +90,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         defects: '',
         actionTaken: '',
         date: new Date().toISOString().split('T')[0],
-        status: 'pending'
+        status: 'pending',
+        shift: 'A',
+        inspectorName: ''
       });
       setEditingReservedItem(null);
       setIsReservedModalOpen(true);
@@ -116,7 +120,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     } else {
       const newItem: ReservedItem = {
         id: Date.now().toString(),
-        ...(reservedFormData as Omit<ReservedItem, 'id'>)
+        shift: reservedFormData.shift || 'A',
+        inspectorName: reservedFormData.inspectorName || 'غير محدد',
+        ...(reservedFormData as Omit<ReservedItem, 'id' | 'shift' | 'inspectorName'>)
       };
       setReservedItems(prev => [newItem, ...prev]);
     }
@@ -342,6 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                  <thead className="text-gray-500 text-xs uppercase font-black">
                      <tr>
                          <th className="px-6 py-2">اسم المنتج</th>
+                         <th className="px-6 py-2">المسؤول / الوردية</th>
                          <th className="px-6 py-2">الكمية</th>
                          <th className="px-6 py-2">وصف العيب</th>
                          <th className="px-6 py-2">الإجراء المتخذ</th>
@@ -353,7 +360,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                  <tbody>
                      {reservedItems.length === 0 ? (
                         <tr>
-                            <td colSpan={7} className="text-center py-10 bg-white rounded-2xl text-gray-400 font-bold border border-gray-100 shadow-sm">
+                            <td colSpan={8} className="text-center py-10 bg-white rounded-2xl text-gray-400 font-bold border border-gray-100 shadow-sm">
                                 لا توجد منتجات في منطقة الحجز حالياً
                             </td>
                         </tr>
@@ -362,6 +369,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                              <tr key={item.id} className="bg-white hover:bg-red-50/30 transition-colors shadow-sm rounded-2xl group">
                                  <td className="px-6 py-4 rounded-r-2xl font-bold text-slate-800 border-t border-b border-r border-gray-100 group-hover:border-red-100">
                                      {item.productName}
+                                 </td>
+                                 <td className="px-6 py-4 border-t border-b border-gray-100 group-hover:border-red-100">
+                                     <div className="flex flex-col">
+                                        <div className="flex items-center gap-1.5 font-bold text-slate-700">
+                                            <User className="w-3 h-3 text-gray-400" />
+                                            {item.inspectorName || 'غير محدد'}
+                                        </div>
+                                        <span className="text-[10px] text-gray-400 font-bold bg-gray-50 px-2 py-0.5 rounded w-fit mt-1">وردية {item.shift || 'A'}</span>
+                                     </div>
                                  </td>
                                  <td className="px-6 py-4 font-black text-slate-800 border-t border-b border-gray-100 group-hover:border-red-100">
                                      {item.quantity}
@@ -490,90 +506,115 @@ export const Dashboard: React.FC<DashboardProps> = ({
                  initial={{ opacity: 0, scale: 0.95 }}
                  animate={{ opacity: 1, scale: 1 }}
                  exit={{ opacity: 0, scale: 0.95 }}
-                 className="bg-white rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden"
+                 className="bg-white rounded-[1.5rem] w-full max-w-lg shadow-2xl overflow-hidden"
                >
-                   <div className="p-6 border-b bg-red-50 flex justify-between items-center">
-                        <h3 className="text-xl font-black text-red-800 flex items-center gap-2">
-                            <ClipboardList className="w-6 h-6" />
-                            {editingReservedItem ? 'تعديل بيانات محجوز' : 'إضافة إلى منطقة المحجوزات'}
+                   <div className="p-4 border-b bg-red-50 flex justify-between items-center">
+                        <h3 className="text-lg font-black text-red-800 flex items-center gap-2">
+                            <ClipboardList className="w-5 h-5" />
+                            {editingReservedItem ? 'تعديل بيانات محجوز' : 'إضافة إلى المحجوزات'}
                         </h3>
                         <button onClick={() => setIsReservedModalOpen(false)} className="text-red-300 hover:text-red-600">
-                            <X className="w-6 h-6" />
+                            <X className="w-5 h-5" />
                         </button>
                    </div>
-                   <form onSubmit={handleSaveReserved} className="p-8 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">اسم المنتج المحجوز</label>
+                   <form onSubmit={handleSaveReserved} className="p-5 space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">اسم المنتج</label>
                                 <input 
                                     required 
                                     value={reservedFormData.productName}
                                     onChange={(e) => setReservedFormData({...reservedFormData, productName: e.target.value})}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
                                     placeholder="اسم المنتج..."
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">الكمية المحجوزة</label>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">الكمية</label>
                                 <input 
                                     type="number"
                                     required 
                                     value={reservedFormData.quantity}
                                     onChange={(e) => setReservedFormData({...reservedFormData, quantity: Number(e.target.value)})}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                             <label className="text-sm font-bold text-gray-700">وصف العيوب</label>
-                             <textarea 
-                                required
-                                value={reservedFormData.defects}
-                                onChange={(e) => setReservedFormData({...reservedFormData, defects: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none h-24"
-                                placeholder="صف العيب بوضوح..."
-                             />
-                        </div>
-
-                        <div className="space-y-2">
-                             <label className="text-sm font-bold text-gray-700">الإجراء المتخذ / القرار</label>
-                             <textarea 
-                                value={reservedFormData.actionTaken}
-                                onChange={(e) => setReservedFormData({...reservedFormData, actionTaken: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none h-24"
-                                placeholder="ما الإجراء الذي تم اتخاذه؟"
-                             />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">تاريخ الحجز</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">المراقب</label>
                                 <input 
-                                    type="date"
-                                    value={reservedFormData.date}
-                                    onChange={(e) => setReservedFormData({...reservedFormData, date: e.target.value})}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                                    required 
+                                    value={reservedFormData.inspectorName}
+                                    onChange={(e) => setReservedFormData({...reservedFormData, inspectorName: e.target.value})}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                                    placeholder="اسم المراقب..."
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">الحالة</label>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">الوردية</label>
                                 <select 
-                                    value={reservedFormData.status}
-                                    onChange={(e) => setReservedFormData({...reservedFormData, status: e.target.value as any})}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none bg-white"
+                                    value={reservedFormData.shift}
+                                    onChange={(e) => setReservedFormData({...reservedFormData, shift: e.target.value as any})}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm"
                                 >
-                                    <option value="pending">قيد الانتظار</option>
-                                    <option value="resolved">تم المعالجة</option>
-                                    <option value="scrapped">إعدام / هالك</option>
+                                    <option value="A">وردية أ</option>
+                                    <option value="B">وردية ب</option>
+                                    <option value="C">وردية ج</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-4 border-t border-gray-100">
-                             <button type="button" onClick={() => setIsReservedModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold">إلغاء</button>
-                             <button type="submit" className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-600/20 flex items-center justify-center gap-2">
-                                <Save className="w-5 h-5" />
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-700">وصف العيوب</label>
+                             <textarea 
+                                required
+                                value={reservedFormData.defects}
+                                onChange={(e) => setReservedFormData({...reservedFormData, defects: e.target.value})}
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none h-16 text-sm resize-none"
+                                placeholder="صف العيب..."
+                             />
+                        </div>
+
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-700">الإجراء المتخذ</label>
+                             <textarea 
+                                value={reservedFormData.actionTaken}
+                                onChange={(e) => setReservedFormData({...reservedFormData, actionTaken: e.target.value})}
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none h-16 text-sm resize-none"
+                                placeholder="الإجراء..."
+                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">التاريخ</label>
+                                <input 
+                                    type="date"
+                                    value={reservedFormData.date}
+                                    onChange={(e) => setReservedFormData({...reservedFormData, date: e.target.value})}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-700">الحالة</label>
+                                <select 
+                                    value={reservedFormData.status}
+                                    onChange={(e) => setReservedFormData({...reservedFormData, status: e.target.value as any})}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none bg-white text-sm"
+                                >
+                                    <option value="pending">قيد الانتظار</option>
+                                    <option value="resolved">تم المعالجة</option>
+                                    <option value="scrapped">إعدام</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-3 border-t border-gray-100">
+                             <button type="button" onClick={() => setIsReservedModalOpen(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm">إلغاء</button>
+                             <button type="submit" className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 text-sm">
+                                <Save className="w-4 h-4" />
                                 حفظ
                              </button>
                         </div>
