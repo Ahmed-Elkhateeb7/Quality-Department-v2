@@ -506,9 +506,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                  initial={{ opacity: 0, scale: 0.95 }}
                  animate={{ opacity: 1, scale: 1 }}
                  exit={{ opacity: 0, scale: 0.95 }}
-                 className="bg-white rounded-[1.5rem] w-full max-w-lg shadow-2xl overflow-hidden"
+                 className="bg-white rounded-[1.5rem] w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
                >
-                   <div className="p-4 border-b bg-red-50 flex justify-between items-center">
+                   <div className="p-4 border-b bg-red-50 flex justify-between items-center shrink-0">
                         <h3 className="text-lg font-black text-red-800 flex items-center gap-2">
                             <ClipboardList className="w-5 h-5" />
                             {editingReservedItem ? 'تعديل بيانات محجوز' : 'إضافة إلى المحجوزات'}
@@ -517,7 +517,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <X className="w-5 h-5" />
                         </button>
                    </div>
-                   <form onSubmit={handleSaveReserved} className="p-5 space-y-3">
+                   <form onSubmit={handleSaveReserved} className="p-5 space-y-3 overflow-y-auto custom-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-gray-700">اسم المنتج</label>
